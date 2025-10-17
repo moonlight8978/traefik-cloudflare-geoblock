@@ -1,0 +1,16 @@
+displayName: Cloudflare GeoBlock
+type: middleware
+iconPath: .assets/icon.png
+
+import: github.com/moonlight8978/traefik-cloudflare-geoblock
+
+summary: "GeoBlock based on Cloudflare CF-IPCountry header"
+
+testData:
+  Mode: include
+  LogLevel: info
+  AllowEmpty: true
+  Countries:
+    - US
+  Headers:
+    CF-IPCountry: US
