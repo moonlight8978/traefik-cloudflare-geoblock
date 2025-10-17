@@ -1,0 +1,20 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - skip: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: moonlight8978
+    name: traefik-cloudflare-geoblock

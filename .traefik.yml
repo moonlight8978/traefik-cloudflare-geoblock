@@ -7,10 +7,6 @@ import: github.com/moonlight8978/traefik-cloudflare-geoblock
 summary: "GeoBlock based on Cloudflare CF-IPCountry header"
 
 testData:
-  Mode: include
-  LogLevel: info
-  AllowEmpty: true
-  Countries:
-    - US
-  Headers:
-    CF-IPCountry: US
+  mode: include
+  logLevel: info
+  allowEmpty: true
