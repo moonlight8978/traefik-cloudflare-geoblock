@@ -189,6 +189,64 @@ func TestIncludeModeWithExceptionsRange(t *testing.T) {
 	}
 }
 
+func TestIncludeModeWithExceptionsIPv4MappedIPv6(t *testing.T) {
+	tests := []struct {
+		name       string
+		exceptions []string
+		ip         string
+		response   int
+	}{
+		{
+			name:       "mapped client ip matches ipv4 exception",
+			exceptions: []string{"49.36.45.120"},
+			ip:         "::ffff:49.36.45.120",
+			response:   http.StatusOK,
+		},
+		{
+			name:       "mapped client ip matches ipv4 range",
+			exceptions: []string{"49.36.45.120-49.36.45.130"},
+			ip:         "::ffff:49.36.45.125",
+			response:   http.StatusOK,
+		},
+		{
+			name:       "ipv4 client ip matches mapped exception",
+			exceptions: []string{"::ffff:49.36.45.120"},
+			ip:         "49.36.45.120",
+			response:   http.StatusOK,
+		},
+		{
+			name:       "ipv4 client ip matches mapped range",
+			exceptions: []string{"::ffff:49.36.45.120-::ffff:49.36.45.130"},
+			ip:         "49.36.45.125",
+			response:   http.StatusOK,
+		},
+		{
+			name:       "mapped client ip outside range is blocked",
+			exceptions: []string{"49.36.45.120-49.36.45.130"},
+			ip:         "::ffff:49.36.45.131",
+			response:   http.StatusForbidden,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := geoblock.CreateConfig()
+			cfg.Mode = "include"
+			cfg.Countries = []string{"US"}
+			cfg.AllowEmpty = false
+			cfg.Exceptions = test.exceptions
+
+			handler, rw, req := setupReq(t, cfg)
+			req.Header.Add("CF-IPCountry", "CN")
+			req.Header.Add("CF-Connecting-IP", test.ip)
+
+			handler.ServeHTTP(rw, req)
+
+			assertEqual(t, rw.Code, test.response)
+		})
+	}
+}
+
 func TestExcludeModeIgnoresExceptions(t *testing.T) {
 	cfg := geoblock.CreateConfig()
 	cfg.Mode = "exclude"

@@ -23,6 +23,7 @@ func CreateConfig() *Config {
 		Mode:       "include",
 		Countries:  []string{},
 		AllowEmpty: true,
+		Exceptions: []string{},
 	}
 }
 
@@ -135,7 +136,7 @@ func getClientIP(req *http.Request) (netip.Addr, bool) {
 
 		ip, err := netip.ParseAddr(c)
 		if err == nil {
-			return ip, true
+			return ip.Unmap(), true
 		}
 	}
 
@@ -182,6 +183,7 @@ func parseExceptions(values []string) ([]ipRange, error) {
 			return nil, err
 		}
 
+		addr = addr.Unmap()
 		result = append(result, ipRange{start: addr, end: addr})
 	}
 
@@ -203,6 +205,8 @@ func parseIPRange(value string) (netip.Addr, netip.Addr, error) {
 	if err != nil {
 		return netip.Addr{}, netip.Addr{}, err
 	}
+
+	start, end = start.Unmap(), end.Unmap()
 
 	if start.BitLen() != end.BitLen() {
 		return netip.Addr{}, netip.Addr{}, fmt.Errorf("mismatched IP versions in range: %s", value)

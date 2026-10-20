@@ -38,6 +38,12 @@ http:
 
           # Exceptions: List of Public IP addresses or ranges that are allowed despite not being in the whitelisted countries (include mode only)
           # Supports IPv4, IPv6, and ranges in the form "start-end"
+          # Client IP is resolved from the first valid value, in priority order:
+          #   1. CF-Connecting-IP header
+          #   2. X-Real-IP header
+          #   3. X-Forwarded-For header (first entry)
+          #   4. Request remote address
+          # Headers can be spoofed if the origin is reachable without going through Cloudflare
           exceptions:
             - 2a0d:4cc0:80:5bf4:5498:31ff:fe82:5521
             - 49.36.45.120
