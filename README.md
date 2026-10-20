@@ -35,6 +35,13 @@ http:
           # Whether to allow requests without CF-IPCountry header
           # Default: true
           allowEmpty: true
+
+          # Exceptions: List of Public IP addresses or ranges that are allowed despite not being in the whitelisted countries (include mode only)
+          # Supports IPv4, IPv6, and ranges in the form "start-end"
+          exceptions:
+            - 2a0d:4cc0:80:5bf4:5498:31ff:fe82:5521
+            - 49.36.45.120
+            - 49.36.45.120-49.36.45.130
 ```
 
 3. Apply the middleware to your routers:
@@ -58,3 +65,5 @@ http:
 - Mode options:
   - `include`: Only allow traffic from specified countries
   - `exclude`: Block traffic from specified countries
+- In `include` mode, `exceptions` can be used to allow specific IPs or ranges even when their country is not in `countries`
+- In `exclude` mode, `exceptions` are ignored and excluded countries remain blocked

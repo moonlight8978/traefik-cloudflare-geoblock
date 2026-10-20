@@ -114,6 +114,99 @@ func TestExcludeMode(t *testing.T) {
 	}
 }
 
+func TestIncludeModeWithExceptionsIPv4(t *testing.T) {
+	cfg := geoblock.CreateConfig()
+	cfg.Mode = "include"
+	cfg.Countries = []string{"US"}
+	cfg.AllowEmpty = false
+	cfg.Exceptions = []string{
+		"49.36.45.120",
+	}
+
+	handler, rw, req := setupReq(t, cfg)
+	req.Header.Add("CF-IPCountry", "CN")
+	req.Header.Add("CF-Connecting-IP", "49.36.45.120")
+
+	handler.ServeHTTP(rw, req)
+
+	assertEqual(t, rw.Code, http.StatusOK)
+}
+
+func TestIncludeModeWithExceptionsIPv6(t *testing.T) {
+	cfg := geoblock.CreateConfig()
+	cfg.Mode = "include"
+	cfg.Countries = []string{"US"}
+	cfg.AllowEmpty = false
+	cfg.Exceptions = []string{
+		"2a0d:4cc0:80:5bf4:5498:31ff:fe82:5521",
+	}
+
+	handler, rw, req := setupReq(t, cfg)
+	req.Header.Add("CF-IPCountry", "CN")
+	req.Header.Add("CF-Connecting-IP", "2a0d:4cc0:80:5bf4:5498:31ff:fe82:5521")
+
+	handler.ServeHTTP(rw, req)
+
+	assertEqual(t, rw.Code, http.StatusOK)
+}
+
+func TestIncludeModeWithExceptionsRange(t *testing.T) {
+	tests := []struct {
+		name     string
+		ip       string
+		response int
+	}{
+		{
+			name:     "ip inside range is allowed",
+			ip:       "49.36.45.125",
+			response: http.StatusOK,
+		},
+		{
+			name:     "ip outside range is blocked",
+			ip:       "49.36.45.131",
+			response: http.StatusForbidden,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := geoblock.CreateConfig()
+			cfg.Mode = "include"
+			cfg.Countries = []string{"US"}
+			cfg.AllowEmpty = false
+			cfg.Exceptions = []string{
+				"49.36.45.120-49.36.45.130",
+			}
+
+			handler, rw, req := setupReq(t, cfg)
+			req.Header.Add("CF-IPCountry", "CN")
+			req.Header.Add("CF-Connecting-IP", test.ip)
+
+			handler.ServeHTTP(rw, req)
+
+			assertEqual(t, rw.Code, test.response)
+		})
+	}
+}
+
+func TestExcludeModeIgnoresExceptions(t *testing.T) {
+	cfg := geoblock.CreateConfig()
+	cfg.Mode = "exclude"
+	cfg.Countries = []string{"US"}
+	cfg.AllowEmpty = false
+	cfg.Exceptions = []string{
+		"49.36.45.120-49.36.45.130",
+	}
+
+	handler, rw, req := setupReq(t, cfg)
+	req.Header.Add("CF-IPCountry", "US")
+	req.Header.Add("CF-Connecting-IP", "49.36.45.125")
+
+	handler.ServeHTTP(rw, req)
+
+	assertEqual(t, rw.Code, http.StatusForbidden)
+}
+
 func setupReq(t *testing.T, cfg *geoblock.Config) (http.Handler, *httptest.ResponseRecorder, *http.Request) {
 	ctx := context.Background()
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
